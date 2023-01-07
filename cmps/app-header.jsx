@@ -8,6 +8,7 @@ export function AppHeader() {
         </Link>
         <nav>
             <NavLink to="/">Home</NavLink>
+            <NavLink to="/todo/">TodoApp</NavLink>
             <NavLink to="/about">About</NavLink>
         </nav>
     </header>

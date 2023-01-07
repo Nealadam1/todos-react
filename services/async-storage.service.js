@@ -1,4 +1,4 @@
-export const storageService = {
+export const asyncStorageService = {
     query,
     get,
     post,
@@ -13,15 +13,15 @@ function query(entityType, delay = 500) {
 
 function get(entityType, entityId) {
     return query(entityType).then(entities => {
-        const entity = entities.find(entity => entity.id === entityId)
-        if (!entity) throw new Error(`Get failed, cannot find entity with id: ${entityId} in: ${entityType}`)
+        const entity = entities.find(entity => entity._id === entityId)
+        if (!entity) throw new Error(`Get failed, cannot find entity with _id: ${entityId} in: ${entityType}`)
         return entity
     })
 }
 
 function post(entityType, newEntity) {
     newEntity = {...newEntity}
-    newEntity.id = _makeId()
+    newEntity._id = _makeId()
     return query(entityType).then(entities => {
         entities.push(newEntity)
         _save(entityType, entities)
@@ -31,8 +31,8 @@ function post(entityType, newEntity) {
 
 function put(entityType, updatedEntity) {
     return query(entityType).then(entities => {
-        const idx = entities.findIndex(entity => entity.id === updatedEntity.id)
-        if (idx < 0) throw new Error(`Update failed, cannot find entity with id: ${entityId} in: ${entityType}`)
+        const idx = entities.findIndex(entity => entity._id === updatedEntity._id)
+        if (idx < 0) throw new Error(`Update failed, cannot find entity with _id: ${entityId} in: ${entityType}`)
         entities.splice(idx, 1, updatedEntity)
         _save(entityType, entities)
         return updatedEntity
@@ -41,8 +41,8 @@ function put(entityType, updatedEntity) {
 
 function remove(entityType, entityId) {
     return query(entityType).then(entities => {
-        const idx = entities.findIndex(entity => entity.id === entityId)
-        if (idx < 0) throw new Error(`Remove failed, cannot find entity with id: ${entityId} in: ${entityType}`)
+        const idx = entities.findIndex(entity => entity._id === entityId)
+        if (idx < 0) throw new Error(`Remove failed, cannot find entity with _id: ${entityId} in: ${entityType}`)
         entities.splice(idx, 1)
         _save(entityType, entities)
     })
