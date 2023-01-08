@@ -1,7 +1,9 @@
-import { storageService } from './async-storage.service.js'
+import { storageServiceAsync } from './async-storage.service.js'
+import { storageService} from './storage.service.js'
 
-const STORAGE_KEY = 'userDB'
-const STORAGE_KEY_LOGGEDIN = 'loggedinUser'
+const USER_KEY = 'userDB'
+const USER_SESSION_KEY = 'loggedinUser'
+
 
 export const userService = {
     login,
@@ -9,61 +11,100 @@ export const userService = {
     signup,
     getById,
     getLoggedinUser,
-    updateScore
+    update,
+    remove,
+    getEmptyCredentials
 }
-
-window.us = userService
+_createDemoUsers()
 
 function getById(userId) {
-    return storageService.get(STORAGE_KEY, userId)
+    return storageServiceAsync.get(USER_KEY, userId)
 }
 
-function login({ username, password }) {
-    return storageService.query(STORAGE_KEY)
-        .then(users => {
-            const user = users.find(user => user.username === username)
-            if (user) return _setLoggedinUser(user)
-            else return Promise.reject('Invalid login')
-        })
+function update(user) {
+    return storageServiceAsync.put(USER_KEY, user).then(user => {
+        _setLoggedinUser(user)
+        return user
+    })
+}
+function remove(userId) {
+    return storageServiceAsync.remove(USER_KEY, userId)
 }
 
-function signup({ username, password, fullname }) {
-    const user = { username, password, fullname, score: 10000 }
-    return storageService.post(STORAGE_KEY, user)
-        .then(_setLoggedinUser)
+function login(credentials) {
+    return storageServiceAsync.query(USER_KEY).then((users) => {
+        const user = users.find((u) => u.username === credentials.username)
+        if (!user) return Promise.reject('Login failed')
+        _setLoggedinUser(user)
+        return user
+    })
 }
 
-function updateScore(diff) {
-    return userService.getById(getLoggedinUser()._id)
-        .then(user => {
-            if (user.score + diff < 0) return Promise.reject('No credit')
-            user.score += diff
-            return storageService.put(STORAGE_KEY, user)
-                .then((user) => {
-                    _setLoggedinUser(user)
-                    return user.score
-                })
-        })
+function signup(credentials) {
+    return storageServiceAsync.post(USER_KEY, credentials).then((user) => {
+        _setLoggedinUser(user)
+        return user
+    })
+}
+
+function getEmptyCredentials(
+    fullname = '',
+    username = '',
+    password = 'secret',
+
+) {
+    return {
+        fullname,
+        username,
+        password,
+        activities: [],
+    }
 }
 
 function logout() {
-    sessionStorage.removeItem(STORAGE_KEY_LOGGEDIN)
+    sessionStorage.removeItem(USER_SESSION_KEY)
     return Promise.resolve()
 }
 
+
 function getLoggedinUser() {
-    return JSON.parse(sessionStorage.getItem(STORAGE_KEY_LOGGEDIN))
+    return JSON.parse(sessionStorage.getItem(USER_SESSION_KEY) || null)
 }
 
 function _setLoggedinUser(user) {
-    const userToSave = { _id: user._id, fullname: user.fullname, score: user.score }
+    const userToSave = { _id: user._id, fullname: user.fullname }
     sessionStorage.setItem(STORAGE_KEY_LOGGEDIN, JSON.stringify(userToSave))
     return userToSave
 }
 
-// Test Data
-// userService.signup({username: 'muki', password: 'muki1', fullname: 'Muki Ja'})
-// userService.login({username: 'muki', password: 'muki1'})
+function _createDemoUsers() {
+    let userDemo = storageService.loadFromStorage(USER_KEY)
+    console.log(userDemo)
+    if (!userDemo || !userDemo.length) {
+        userDemo = [
+            {
+                _id: 'teata',
+                fullname: 'Neal Adam',
+                username: 'neals',
+                password: 'secret'
+            },
+            {
+                _id: 'gasdgh',
+                fullname: 'dill Adam',
+                username: 'dill',
+                password: 'secret'
+            },
+            {
+                _id: 'teata',
+                fullname: 'reek meek',
+                username: 'reek',
+                password: 'secret'
+            },
 
+        ]
+    }
+
+    storageService.saveToStorage(USER_KEY,userDemo)
+}
 
 

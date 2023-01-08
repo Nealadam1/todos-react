@@ -1,5 +1,7 @@
 
+import { showErrorMsg } from "../services/event-bus.service.js"
 import { todoService } from "../services/todo.service.js"
+import { utilService } from "../services/util.service.js"
 import { loadTodo, loadTodos, saveTodo } from "../store/todo.action.js"
 
 const { useState, useEffect } = React
@@ -13,26 +15,34 @@ export function TodoEdit() {
 
     useEffect(() => {
         if (!todoId) return
-        loadTodo(todoId)
-            .then(todo => {
-                console.log(todo)
-                setTodoToEdit(todo)
+        loadTodo()
 
+    }, [todoId])
+
+    function loadTodo() {
+        todoService.getById(todoId)
+            .then(todo => setTodoToEdit(todo))
+            .catch(err => {
+                showErrorMsg('had issue in todo detail')
+                navigate('/todo')
             })
-
-    }, [])
+    }
 
     function onSaveTodo(ev) {
         ev.preventDefault()
-        saveTodo(todoToEdit).then(todo => console.log('todo saved', todo))
+        saveTodo(todoToEdit).then(todo => {
+            console.log('todo saved', todo)
+            navigate('/todo')
+        })
+
 
     }
 
     function handleChange({ target }) {
-        let { id,value, type, name: field } = target
+        let { id, value, type, name: field } = target
         value = (type === 'number' || type === 'range') ? +value : value
         if (field === 'task') {
-            let idx=todoToEdit.todoList.findIndex(todo=> todo._id === id)
+            let idx = todoToEdit.todoList.findIndex(todo => todo._id === id)
             todoToEdit.todoList[idx].task = value
             const todoJson = JSON.stringify(todoToEdit)
             const todoParse = JSON.parse(todoJson)
@@ -40,6 +50,14 @@ export function TodoEdit() {
         } else {
             setTodoToEdit((prevTodo) => ({ ...prevTodo, [field]: value }))
         }
+    }
+
+    function addTask() {
+        const newTask = { _id: utilService.makeId(), task: '', isDone: false }
+        todoToEdit.todoList.push(newTask)
+        const todoJson = JSON.stringify(todoToEdit)
+        const todoParse = JSON.parse(todoJson)
+        setTodoToEdit((prevTodo) => todoParse)
     }
 
     console.log(todoToEdit)
@@ -71,8 +89,10 @@ export function TodoEdit() {
             <div>
                 <button>{todoToEdit._id ? 'Save' : 'Add'}</button>
                 <Link to="/todo">Back</Link>
+
             </div>
         </form>
+        <button onClick={addTask}>Add Task</button>
 
 
     </section>

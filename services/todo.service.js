@@ -11,12 +11,22 @@ export const todoService = {
     getById,
     save,
     remove,
-    getEmptyTodo
+    getEmptyTodo,
+    getDefaultFilter
 
 }
 
-function query() {
-    return asyncStorageService.query(TODO_KEY)
+function query(filterBy = getDefaultFilter()) {
+  return asyncStorageService.query(TODO_KEY).then((todos) => {
+    if (filterBy.title) {
+      const regex = new RegExp(filterBy.title, 'i')
+      todos = todos.filter((todo) => regex.test(todo.title))
+    }
+    if (filterBy.isComplete) {
+      todos = todos.filter((todo) => todo.isComplete === filterBy.isComplete)
+    }
+    return todos
+  })
 }
 function getById(todoId) {
     return asyncStorageService.get(TODO_KEY, todoId)
@@ -39,9 +49,12 @@ function getEmptyTodo() {
     return {
         title: '',
         todoList: [{ _id: utilService.makeId() ,task: '', isDone: false }],
-        isComplete: false
+        isComplete: 'false'
     }
 }
+function getDefaultFilter() {
+    return { isComplete: '', title: '' }
+  }
 
 function createDemoData() {
 
@@ -53,19 +66,19 @@ function createDemoData() {
                 _id: 'Tdtsa',
                 title: 'server todos',
                 todoList: [{ _id: 'dsad', task: 'build service', isDone: false }, { _id: 'eqrw', task: 'build server', isDone: false }],
-                isComplete: false
+                isComplete: 'false'
             },
             {
                 _id: 'dsaha',
                 title: 'front todos',
                 todoList: [{ _id: 'qrga', task: 'build store', isDone: false }, { _id: 'ngfj', task: 'build cmps', isDone: false }, { _id: 'dsadad', task: 'build users', isDone: false }],
-                isComplete: false
+                isComplete: 'false'
             },
             {
                 _id: 'kjytkgj',
                 title: 'css todos',
                 todoList: [{ _id: 'teapa', task: 'design basic css', isDone: false }],
-                isComplete: false
+                isComplete: 'false'
             }
         ]
 
